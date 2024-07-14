@@ -13,76 +13,57 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Define the database file path
 const dbFilePath = path.join(__dirname, 'db', 'db.json');
-let db = require(dbFilePath);
+
+// Helper function to read the database file
+const readDB = () => {
+  const data = fs.readFileSync(dbFilePath, 'utf8');
+  return JSON.parse(data);
+};
+
+// Helper function to write to the database file
+const writeDB = (data) => {
+  fs.writeFileSync(dbFilePath, JSON.stringify(data, null, 2));
+};
 
 // API Routes
-app.post('/api/notes', function (req, res) {
+app.post('/api/notes', (req, res) => {
+  const db = readDB();
   req.body.id = uuidv4(); // Generate a unique ID
-
   db.push(req.body);
-
-  fs.writeFile(dbFilePath, JSON.stringify(db), function (err) {
-    if (err) {
-      return res.status(500).json({ error: 'Failed to save note' });
-    }
-    res.json(db);
-  });
-});
-
-app.get('/api/notes', function (req, res) {
+  writeDB(db);
   res.json(db);
 });
 
-app.delete('/api/notes/:id', function (req, res) {
-  const id = req.params.id;
-  const noteIndex = db.findIndex(note => note.id === id);
-
-  if (noteIndex !== -1) {
-    db.splice(noteIndex, 1);
-  }
-  
-  fs.writeFile(dbFilePath, JSON.stringify(db), function (err) {
-    if (err) {
-      return res.status(500).json({ error: 'Failed to delete note' });
-    }
-    res.json(db);
-  });
+app.get('/api/notes', (req, res) => {
+  const db = readDB();
+  res.json(db);
 });
 
-// New route to clear the db.json file
-app.delete('/api/notes', function (req, res) {
-  db = [];
+app.delete('/api/notes/:id', (req, res) => {
+  const db = readDB();
+  const id = req.params.id;
+  const newDB = db.filter(note => note.id !== id);
+  writeDB(newDB);
+  res.json(newDB);
+});
 
-  fs.writeFile(dbFilePath, JSON.stringify(db), function (err) {
-    if (err) {
-      return res.status(500).json({ error: 'Failed to clear notes' });
-    }
-    res.json(db);
-  });
+app.delete('/api/notes', (req, res) => {
+  const emptyDB = [];
+  writeDB(emptyDB);
+  res.json(emptyDB);
 });
 
 // HTML Routes
-const NOTES_HTML_PATH = path.join(__dirname, 'public', 'notes.html');
-const INDEX_HTML_PATH = path.join(__dirname, 'public', 'index.html');
-
 app.get('/notes', (req, res) => {
-  res.sendFile(NOTES_HTML_PATH, (err) => {
-    if (err) {
-      res.status(500).send('Failed to load the notes page.');
-    }
-  });
+  res.sendFile(path.join(__dirname, 'public', 'notes.html'));
 });
 
 app.get('*', (req, res) => {
-  res.sendFile(INDEX_HTML_PATH, (err) => {
-    if (err) {
-      res.status(500).send('Failed to load the index page.');
-    }
-  });
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Error handling middleware for 404 errors
-app.use((req, res, next) => {
+app.use((req, res) => {
   res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
 });
 
@@ -92,6 +73,4 @@ app.use((err, req, res, next) => {
   res.status(500).send('Something broke!');
 });
 
-app.listen(PORT, () =>
-  console.log(`App listening at http://localhost:${PORT}`)
-);
+app.listen(PORT, () => console.log(`App listening at http://localhost:${PORT}`));
