@@ -3,6 +3,7 @@ let noteTitle;
 let noteText;
 let saveNoteBtn;
 let newNoteBtn;
+let clearBtn;
 let noteList;
 
 if (window.location.pathname === '/notes') {
@@ -17,12 +18,16 @@ if (window.location.pathname === '/notes') {
 
 // Show an element
 const show = (elem) => {
-  elem.style.display = 'inline';
+  if (elem) {
+    elem.style.display = 'inline';
+  }
 };
 
 // Hide an element
 const hide = (elem) => {
-  elem.style.display = 'none';
+  if (elem) {
+    elem.style.display = 'none';
+  }
 };
 
 // activeNote is used to keep track of the note in the textarea
@@ -32,17 +37,17 @@ const getNotes = () =>
   fetch('/api/notes', {
     method: 'GET',
     headers: {
-      'Content-Type': 'application/json'
-    }
+      'Content-Type': 'application/json',
+    },
   });
 
 const saveNote = (note) =>
   fetch('/api/notes', {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
     },
-    body: JSON.stringify(note)
+    body: JSON.stringify(note),
   });
 
 const deleteNote = (id) =>
@@ -75,7 +80,7 @@ const renderActiveNote = () => {
 const handleNoteSave = () => {
   const newNote = {
     title: noteTitle.value,
-    text: noteText.value
+    text: noteText.value,
   };
   saveNote(newNote).then(() => {
     getAndRenderNotes();
@@ -108,8 +113,8 @@ const handleNoteView = (e) => {
   renderActiveNote();
 };
 
-// Sets the activeNote to and empty object and allows the user to enter a new note
-const handleNewNoteView = (e) => {
+// Sets the activeNote to an empty object and allows the user to enter a new note
+const handleNewNoteView = () => {
   activeNote = {};
   show(clearBtn);
   renderActiveNote();
@@ -185,10 +190,10 @@ const renderNoteList = async (notes) => {
 const getAndRenderNotes = () => getNotes().then(renderNoteList);
 
 if (window.location.pathname === '/notes') {
-  saveNoteBtn.addEventListener('click', handleNoteSave);
-  newNoteBtn.addEventListener('click', handleNewNoteView);
-  clearBtn.addEventListener('click', renderActiveNote);
-  noteForm.addEventListener('input', handleRenderBtns);
+  if (saveNoteBtn) saveNoteBtn.addEventListener('click', handleNoteSave);
+  if (newNoteBtn) newNoteBtn.addEventListener('click', handleNewNoteView);
+  if (clearBtn) clearBtn.addEventListener('click', renderActiveNote);
+  if (noteForm) noteForm.addEventListener('input', handleRenderBtns);
 }
 
 getAndRenderNotes();
